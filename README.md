@@ -2,14 +2,16 @@
 
 Backend server for Guest Network TV (`gntv`) room onboarding.
 
-This service is intended to coordinate Google TV / Android TV welcome screens, guest PIN onboarding, UniFi virtual network overrides, and session lifecycle management for room-specific casting.
+This service coordinates Google TV / Android TV welcome screens, guest PIN onboarding, UniFi virtual network overrides, and session lifecycle management for room-specific casting.
 
 The companion Android / Google TV application will live in `gntv-tv`.
 
-## Draft documentation
+## Documentation
 
 - [Database schema](docs/schema.md)
 - [API contract](docs/api-contract.md)
+- [Codex build plan](docs/codex-build-plan.md)
+- [Repository agent instructions](AGENTS.md)
 
 ## Initial architectural assumptions
 
@@ -19,3 +21,4 @@ The companion Android / Google TV application will live in `gntv-tv`.
 - UniFi Network API configured via environment or admin settings.
 - Google TV devices are provisioned by ADB and then assigned to room VLANs using UniFi virtual network override.
 - Guest devices are temporarily moved into the room VLAN after successful PIN entry.
+- When a guest session is released, expired, or manually unassigned, the guest client's UniFi network override must be cleared by setting `virtual_network_override_enabled=false`. Do not restore a previous guest override.

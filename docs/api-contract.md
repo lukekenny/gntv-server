@@ -45,15 +45,11 @@ Content-Type: application/json
 
 Base path: `/api/admin`
 
-## Properties
-
 ### `GET /api/admin/properties`
 
 List properties visible to the current admin.
 
 ### `POST /api/admin/properties`
-
-Create a property.
 
 ```json
 {
@@ -70,8 +66,6 @@ Create a property.
 List configured UniFi controllers.
 
 ### `POST /api/admin/unifi/controllers`
-
-Create/update UniFi controller settings.
 
 ```json
 {
@@ -203,7 +197,7 @@ Shows clients currently assigned to a TV/room by active sessions and UniFi overr
 
 ### `POST /api/admin/sessions/{session_id}/release`
 
-Manually release a guest session and undo network override.
+Manually release a guest session and clear the guest client's UniFi network override.
 
 ```json
 {
@@ -213,18 +207,15 @@ Manually release a guest session and undo network override.
 
 ### `POST /api/admin/guest-clients/{guest_client_id}/unassign`
 
-Remove or restore a guest client’s UniFi override.
+Clear a guest client's UniFi override.
 
 ```json
 {
-  "mode": "restore_previous"
+  "reason": "admin_requested"
 }
 ```
 
-Allowed `mode` values:
-
-- `restore_previous`
-- `clear_override`
+This endpoint must not restore a previous override. It must set `virtual_network_override_enabled=false`.
 
 ## Usage/stats
 
@@ -257,7 +248,7 @@ Base path: `/api/tv`
 
 All TV endpoints require a device token.
 
-## `POST /api/tv/register`
+### `POST /api/tv/register`
 
 Used during enrollment to bind the installed app to a backend `tv_device_id`. This may be called by an ADB provisioning command or by the app on first launch with a one-time token.
 
@@ -272,11 +263,9 @@ Used during enrollment to bind the installed app to a backend `tv_device_id`. Th
 }
 ```
 
-## `GET /api/tv/config`
+### `GET /api/tv/config`
 
 Returns the welcome-screen payload for the authenticated TV device.
-
-Response:
 
 ```json
 {
@@ -309,7 +298,7 @@ Response:
 
 The backend should rotate PINs and QR tokens periodically.
 
-## `POST /api/tv/heartbeat`
+### `POST /api/tv/heartbeat`
 
 ```json
 {
@@ -339,7 +328,7 @@ Allowed screen modes:
 - `maintenance`
 - `error`
 
-## `POST /api/tv/cast-state`
+### `POST /api/tv/cast-state`
 
 Optional future endpoint if the Android app can detect cast lifecycle signals.
 
@@ -360,7 +349,7 @@ Allowed states:
 
 Base path: `/api/guest`
 
-## `GET /join?t={qr_token}`
+### `GET /join?t={qr_token}`
 
 Human-facing QR target page. Renders a simple page with PIN entry form.
 
@@ -371,7 +360,7 @@ The server should validate:
 - TV device is enabled
 - room is enabled
 
-## `POST /api/guest/pair`
+### `POST /api/guest/pair`
 
 Submit PIN from QR page.
 
@@ -416,7 +405,7 @@ Response:
 
 ### `POST /api/guest/release`
 
-Optional guest-facing disconnect button.
+Optional guest-facing disconnect button. This must clear the guest client's UniFi override.
 
 ```json
 {
@@ -480,9 +469,14 @@ Content-Type: application/json
 
 ### Clear virtual network override
 
-To be verified against UniFi behaviour, likely:
+Guest release/unassign must use this behaviour:
 
-```json
+```http
+PUT {UNIFI_BASE_URL}/api/s/{site}/rest/user/{user_id}
+X-API-Key: <key>
+Accept: application/json
+Content-Type: application/json
+
 {
   "virtual_network_override_enabled": false,
   "virtual_network_override_id": "",
@@ -490,7 +484,7 @@ To be verified against UniFi behaviour, likely:
 }
 ```
 
-Preferred release behaviour is to restore the captured previous values from `network_overrides`.
+Do not restore previous guest override values when a session is released.
 
 ## Background jobs
 

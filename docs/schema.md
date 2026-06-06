@@ -6,9 +6,10 @@ This document defines the first-pass relational model for `gntv-server`. It is i
 
 - Treat rooms, TV devices, guest devices, and casting sessions as distinct entities.
 - Persist UniFi identifiers exactly as returned by UniFi, especially network `_id` values and client/user `_id` values.
-- Make all network override actions auditable and reversible.
+- Make all network override actions auditable.
 - Keep the Google TV app generic; room-specific data should come from the backend.
 - Prefer explicit state transitions over ad hoc booleans.
+- For guest clients, release/unassign must clear the UniFi override rather than restoring a previous override.
 
 ## Core enums
 
@@ -231,8 +232,8 @@ Every UniFi virtual network override applied by the system.
 | `from_network_id` | uuid fk nullable | Best-effort cached previous network |
 | `to_network_id` | uuid fk nullable | Internal network id |
 | `to_unifi_network_id` | text | UniFi network `_id` |
-| `previous_override_enabled` | boolean nullable | Captured before apply |
-| `previous_override_id` | text nullable | Captured before apply |
+| `previous_override_enabled` | boolean nullable | Captured before apply for audit only |
+| `previous_override_id` | text nullable | Captured before apply for audit only |
 | `state` | override_state |  |
 | `applied_at` | timestamptz nullable |  |
 | `released_at` | timestamptz nullable |  |
@@ -240,7 +241,7 @@ Every UniFi virtual network override applied by the system.
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |
 
-Release should normally restore the previous override state, not blindly clear it, unless policy says otherwise.
+Guest release policy: release/unassign must clear the guest client's UniFi override by setting `virtual_network_override_enabled=false` and `virtual_network_override_id=""`. Previous override values may be retained for audit/debugging but must not be restored for guest clients.
 
 ## `jobs`
 
@@ -297,4 +298,4 @@ Aggregated/statistical event stream.
 1. Detecting “casting ended” may be difficult unless the TV app can observe app foreground/background state or another signal. Initial cleanup should rely on timeout plus manual/admin release.
 2. Guest MAC discovery from a web request is not possible directly across normal L3 routing. The backend should map request IP to UniFi `/rest/user` data, then extract MAC/client `_id` from UniFi.
 3. PINs should be short-lived and rate-limited. A 4-digit PIN is usable only because the QR token and TV/session context also constrain the attack surface.
-4. For safety, release should restore a client’s previous override state where possible, rather than always setting `virtual_network_override_enabled=false`.
+4. Guest session release must clear override state, not restore previous guest override state.
