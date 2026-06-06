@@ -22,6 +22,29 @@ class Settings(BaseSettings):
         default="http://localhost:8000",
         validation_alias="PUBLIC_BASE_URL",
     )
+    trust_proxy_headers: bool = Field(
+        default=False,
+        validation_alias="TRUST_PROXY_HEADERS",
+    )
+    trusted_proxy_cidrs: str = Field(
+        default="",
+        validation_alias="TRUSTED_PROXY_CIDRS",
+    )
+    guest_pin_max_attempts: int = Field(
+        default=5,
+        ge=1,
+        validation_alias="GUEST_PIN_MAX_ATTEMPTS",
+    )
+    guest_pin_window_seconds: int = Field(
+        default=300,
+        ge=1,
+        validation_alias="GUEST_PIN_WINDOW_SECONDS",
+    )
+    guest_session_duration_seconds: int = Field(
+        default=14_400,
+        ge=300,
+        validation_alias="GUEST_SESSION_DURATION_SECONDS",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",

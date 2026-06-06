@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Guest casting</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/guest.css') }}">
+  </head>
+  <body>
+    <main class="portal">
+      <header class="brand">
+        <span class="brand-mark" aria-hidden="true">G</span>
+        <span>Guest casting</span>
+      </header>
+
+      {% if state == "success" %}
+        <section aria-labelledby="success-title">
+          <div class="status-icon success" aria-hidden="true">&#10003;</div>
+          <h1 id="success-title">You're connected</h1>
+          <p>Your device is connected to {{ room_display_name }}.</p>
+          <p class="instruction">
+            Open a Cast-enabled app, tap the Cast icon, and select the room TV.
+          </p>
+        </section>
+      {% elif state == "error" %}
+        <section aria-labelledby="error-title">
+          <div class="status-icon error" aria-hidden="true">!</div>
+          <h1 id="error-title">Unable to connect</h1>
+          <p>{{ error_message }}</p>
+        </section>
+      {% else %}
+        <section aria-labelledby="join-title">
+          <p class="room-label">{{ room_display_name or "Room TV" }}</p>
+          <h1 id="join-title">Enter the PIN from the TV</h1>
+          <p>Make sure this device is connected to the guest Wi-Fi.</p>
+
+          {% if error_message %}
+            <p class="form-error" role="alert">{{ error_message }}</p>
+          {% endif %}
+
+          <form action="/join" method="post">
+            <input type="hidden" name="t" value="{{ qr_token }}">
+            <label for="pin">4-digit PIN</label>
+            <input
+              id="pin"
+              name="pin"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              pattern="[0-9]{4}"
+              maxlength="4"
+              required
+              autofocus
+            >
+            <button type="submit">Connect</button>
+          </form>
+        </section>
+      {% endif %}
+    </main>
+  </body>
+</html>

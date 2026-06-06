@@ -26,6 +26,16 @@ class PairingValidationError(ServiceError):
     """Pairing credentials are invalid, expired, or already consumed."""
 
 
+class PairingExpiredError(PairingValidationError):
+    """The pairing session or PIN has expired."""
+
+
+class PairingRateLimitError(ServiceError):
+    def __init__(self, retry_after_seconds: int) -> None:
+        self.retry_after_seconds = retry_after_seconds
+        super().__init__("Too many PIN attempts")
+
+
 class ServiceConfigurationError(ServiceError):
     """Required service configuration is missing or invalid."""
 

@@ -85,6 +85,15 @@ provisioning token. Subsequent `/api/tv/config`, `/api/tv/heartbeat`, and
 `/api/tv/cast-state` requests use the permanent bearer token returned once by
 registration.
 
+Guests open the QR URL at `/join`, enter the four-digit PIN shown by the TV,
+and are matched to a UniFi client by their apparent IP address. Failed PIN
+attempts are rate-limited through persistent audit records.
+
+Proxy forwarding headers are ignored by default. To use `X-Forwarded-For`,
+enable `TRUST_PROXY_HEADERS` and set `TRUSTED_PROXY_CIDRS` to the comma-separated
+CIDRs of proxies that connect directly to the app. Do not enable forwarded
+headers without restricting the trusted proxy networks.
+
 ## Initial architectural assumptions
 
 - Python backend, likely FastAPI.

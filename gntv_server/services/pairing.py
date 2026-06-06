@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from gntv_server.models import GuestSession, PairingCode
 from gntv_server.models.enums import GuestSessionState
-from gntv_server.services.exceptions import PairingValidationError
+from gntv_server.services.exceptions import PairingExpiredError, PairingValidationError
 from gntv_server.services.guest_sessions import GuestSessionService
 from gntv_server.services.security import hash_opaque_token, verify_opaque_token
 
@@ -167,13 +167,34 @@ class PairingService:
         pin: str,
         now: datetime | None = None,
     ) -> ValidatedPairing:
+        validated = await self.lookup_qr_token(
+            qr_token=qr_token,
+            now=now,
+            lock=True,
+        )
+        if not self.verify_pin(pin, validated.pairing_code.code_hash):
+            raise PairingValidationError("Invalid pairing credentials")
+
+        await self.consume_validated_pairing(validated, now=now)
+        return validated
+
+    async def lookup_qr_token(
+        self,
+        *,
+        qr_token: str,
+        now: datetime | None = None,
+        lock: bool = False,
+    ) -> ValidatedPairing:
         check_time = now or datetime.now(UTC)
         token_hash = self.hash_token(qr_token)
-        result = await self.session.execute(
+        statement = (
             select(GuestSession, PairingCode)
             .join(PairingCode, GuestSession.pairing_code_id == PairingCode.id)
             .where(GuestSession.qr_token_hash == token_hash)
         )
+        if lock:
+            statement = statement.with_for_update()
+        result = await self.session.execute(statement)
         row = result.one_or_none()
         if row is None:
             raise PairingValidationError("Invalid pairing credentials")
@@ -185,12 +206,28 @@ class PairingService:
         }
         if (
             not self.verify_token(qr_token, guest_session.qr_token_hash)
-            or guest_session.expires_at <= check_time
             or guest_session.state not in valid_session_states
-            or not self.pairing_code_is_valid(pairing_code, pin, now=check_time)
+            or pairing_code.consumed_at is not None
         ):
-            raise PairingValidationError("Invalid or expired pairing credentials")
+            raise PairingValidationError("Invalid pairing credentials")
+        if (
+            guest_session.expires_at <= check_time
+            or pairing_code.expires_at <= check_time
+        ):
+            raise PairingExpiredError("Pairing credentials have expired")
+        return ValidatedPairing(guest_session, pairing_code)
 
+    async def consume_validated_pairing(
+        self,
+        validated: ValidatedPairing,
+        *,
+        now: datetime | None = None,
+    ) -> None:
+        check_time = now or datetime.now(UTC)
+        guest_session = validated.guest_session
+        pairing_code = validated.pairing_code
+        if pairing_code.consumed_at is not None:
+            raise PairingValidationError("Pairing credentials already consumed")
         pairing_code.consumed_at = check_time
         if guest_session.state == GuestSessionState.PIN_DISPLAYED:
             GuestSessionService.transition_state(
@@ -199,4 +236,16 @@ class PairingService:
                 now=check_time,
             )
         await self.session.flush()
-        return ValidatedPairing(guest_session, pairing_code)
+
+    async def find_session_by_qr_token(self, qr_token: str) -> GuestSession:
+        token_hash = self.hash_token(qr_token)
+        result = await self.session.execute(
+            select(GuestSession).where(GuestSession.qr_token_hash == token_hash)
+        )
+        guest_session = next(iter(result.scalars().all()), None)
+        if guest_session is None or not self.verify_token(
+            qr_token,
+            guest_session.qr_token_hash,
+        ):
+            raise PairingValidationError("Invalid session token")
+        return guest_session
