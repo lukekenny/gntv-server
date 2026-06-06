@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "gntv-server"
     database_url: str = Field(
-        default="postgresql+psycopg://gntv:gntv@localhost:5432/gntv",
+        default="postgresql+asyncpg://gntv:gntv@localhost:5432/gntv",
         validation_alias="DATABASE_URL",
     )
     admin_token: str = Field(default="", validation_alias="ADMIN_TOKEN")

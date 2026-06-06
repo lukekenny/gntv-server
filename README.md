@@ -43,10 +43,24 @@ ruff format --check .
 pytest
 ```
 
+Start PostgreSQL and run database migrations against the database configured by
+`DATABASE_URL`:
+
+```bash
+docker compose up -d postgres
+alembic upgrade head
+```
+
 Start the app and PostgreSQL with Docker Compose:
 
 ```bash
 docker compose up --build
+```
+
+Migrations can also run inside the application image:
+
+```bash
+docker compose run --rm app alembic upgrade head
 ```
 
 Open the health check endpoint:
