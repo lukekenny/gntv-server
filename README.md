@@ -80,6 +80,11 @@ curl -H "Authorization: Bearer ${ADMIN_TOKEN}" \
 UniFi controller records store an environment-variable reference such as
 `UNIFI_API_KEY`, not the API key itself.
 
+The companion TV app registers through `/api/tv/register` with its one-time
+provisioning token. Subsequent `/api/tv/config`, `/api/tv/heartbeat`, and
+`/api/tv/cast-state` requests use the permanent bearer token returned once by
+registration.
+
 ## Initial architectural assumptions
 
 - Python backend, likely FastAPI.

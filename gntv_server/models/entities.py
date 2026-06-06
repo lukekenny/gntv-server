@@ -110,6 +110,14 @@ class Room(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
 class TVDevice(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "tv_devices"
+    __table_args__ = (
+        Index(
+            "uq_tv_devices_device_token_hash",
+            "device_token_hash",
+            unique=True,
+            postgresql_where=text("device_token_hash IS NOT NULL"),
+        ),
+    )
 
     room_id: Mapped[UUID] = mapped_column(
         ForeignKey("rooms.id"),
@@ -128,7 +136,12 @@ class TVDevice(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         index=True,
     )
     app_version: Mapped[str | None] = mapped_column(Text)
-    provisioning_token_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    provisioning_token_hash: Mapped[str | None] = mapped_column(Text)
+    device_token_hash: Mapped[str | None] = mapped_column(Text)
+    android_id: Mapped[str | None] = mapped_column(Text)
+    model: Mapped[str | None] = mapped_column(Text)
+    screen_mode: Mapped[str | None] = mapped_column(Text)
+    foreground: Mapped[bool | None] = mapped_column(Boolean)
     last_heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

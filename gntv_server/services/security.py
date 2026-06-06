@@ -1,5 +1,10 @@
 import hashlib
 import hmac
+import secrets
+
+
+def generate_opaque_token() -> str:
+    return secrets.token_urlsafe(32)
 
 
 def hash_opaque_token(token: str) -> str:

@@ -32,10 +32,27 @@ def test_models_import_and_key_tables_exist() -> None:
     assert expected_tables.issubset(Base.metadata.tables)
 
 
+def test_tv_device_auth_columns_are_migration_ready() -> None:
+    table = Base.metadata.tables["tv_devices"]
+
+    assert table.c.provisioning_token_hash.nullable is True
+    assert table.c.device_token_hash.nullable is True
+    assert {
+        "android_id",
+        "model",
+        "screen_mode",
+        "foreground",
+    }.issubset(table.c.keys())
+    assert any(
+        index.name == "uq_tv_devices_device_token_hash" and index.unique is True
+        for index in table.indexes
+    )
+
+
 def test_alembic_has_single_head_migration() -> None:
     script = ScriptDirectory.from_config(Config("alembic.ini"))
 
-    assert script.get_heads() == ["20260606_0001"]
+    assert script.get_heads() == ["20260606_0002"]
 
 
 def test_async_database_url_preserves_credentials() -> None:

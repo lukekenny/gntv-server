@@ -5,11 +5,17 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from gntv_server.core.config import Settings, get_settings
+from gntv_server.db.session import get_db_session
 from gntv_server.integrations.unifi import UniFiClient
-from gntv_server.models import UniFiController
-from gntv_server.services.exceptions import ServiceConfigurationError
+from gntv_server.models import TVDevice, UniFiController
+from gntv_server.services.exceptions import (
+    DeviceAuthenticationError,
+    ServiceConfigurationError,
+)
+from gntv_server.services.tv_devices import TVDeviceService
 
 UniFiClientFactory = Callable[[UniFiController], UniFiClient]
 
@@ -40,6 +46,31 @@ def require_admin(
             detail="Invalid admin bearer token",
         )
     return "admin"
+
+
+async def require_tv_device(
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None,
+        Security(bearer_scheme),
+    ],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> TVDevice:
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="TV device bearer token is required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    try:
+        return await TVDeviceService(session).authenticate_device(
+            credentials.credentials
+        )
+    except DeviceAuthenticationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid TV device bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
 
 
 def get_unifi_client_factory(

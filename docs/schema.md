@@ -135,7 +135,12 @@ Google TV / Android TV devices running the companion app.
 | `unifi_network_override_id` | text nullable | Room network `_id` applied to TV |
 | `status` | tv_device_status |  |
 | `app_version` | text nullable | From heartbeat |
-| `provisioning_token_hash` | text | Used by TV app auth |
+| `provisioning_token_hash` | text nullable | One-time enrollment credential |
+| `device_token_hash` | text nullable | Permanent TV bearer credential |
+| `android_id` | text nullable | Android device identifier reported at registration |
+| `model` | text nullable | Device model reported at registration |
+| `screen_mode` | text nullable | Last screen mode reported by heartbeat |
+| `foreground` | boolean nullable | Last foreground state reported by heartbeat |
 | `last_heartbeat_at` | timestamptz nullable |  |
 | `created_at` | timestamptz |  |
 | `updated_at` | timestamptz |  |

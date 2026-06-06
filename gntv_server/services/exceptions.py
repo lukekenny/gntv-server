@@ -28,3 +28,11 @@ class PairingValidationError(ServiceError):
 
 class ServiceConfigurationError(ServiceError):
     """Required service configuration is missing or invalid."""
+
+
+class DeviceAuthenticationError(ServiceError):
+    """A TV device credential is missing, invalid, or no longer active."""
+
+
+class ProvisioningValidationError(ServiceError):
+    """A TV provisioning token is invalid or has already been consumed."""
