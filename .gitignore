@@ -1,0 +1,62 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Packaging/build artefacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment/config secrets
+.env
+.env.*
+!.env.example
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Alembic/local database artefacts
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker/local runtime
+docker-compose.override.yml
+*.log
+logs/
+
+# Test/type/lint tooling
+.tox/
+.nox/
+.cache/
+
+# Local uploads/assets generated during development
+uploads/
+media/
+static/generated/
