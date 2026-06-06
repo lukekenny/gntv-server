@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from typing import Any
 from uuid import UUID
 
+from sqlalchemy import Select, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from gntv_server.models import AuditEvent
@@ -67,3 +68,30 @@ class AuditService:
         self.session.add(event)
         await self.session.flush()
         return event
+
+    async def list_events(
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 50,
+        property_id: UUID | None = None,
+        event_type: str | None = None,
+    ) -> tuple[list[AuditEvent], int]:
+        filters = []
+        if property_id is not None:
+            filters.append(AuditEvent.property_id == property_id)
+        if event_type is not None:
+            filters.append(AuditEvent.event_type == event_type)
+
+        count_statement = select(func.count()).select_from(AuditEvent).where(*filters)
+        total = int((await self.session.execute(count_statement)).scalar_one())
+
+        statement: Select[tuple[AuditEvent]] = (
+            select(AuditEvent)
+            .where(*filters)
+            .order_by(AuditEvent.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        result = await self.session.execute(statement)
+        return list(result.scalars().all()), total

@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from gntv_server.models import Room
+from gntv_server.models import Network, Room
 from gntv_server.services.exceptions import EntityNotFoundError
 
 
@@ -20,6 +20,7 @@ class RoomService:
         network_id: UUID,
         enabled: bool = True,
     ) -> Room:
+        await self._validate_network(property_id=property_id, network_id=network_id)
         room = Room(
             property_id=property_id,
             room_code=room_code,
@@ -66,6 +67,10 @@ class RoomService:
         if display_name is not None:
             room.display_name = display_name
         if network_id is not None:
+            await self._validate_network(
+                property_id=room.property_id,
+                network_id=network_id,
+            )
             room.network_id = network_id
         if enabled is not None:
             room.enabled = enabled
@@ -77,3 +82,16 @@ class RoomService:
         room.enabled = False
         await self.session.flush()
         return room
+
+    async def _validate_network(
+        self,
+        *,
+        property_id: UUID,
+        network_id: UUID,
+    ) -> Network:
+        network = await self.session.get(Network, network_id)
+        if network is None or network.property_id != property_id:
+            raise EntityNotFoundError(
+                f"Network {network_id} was not found for property {property_id}"
+            )
+        return network

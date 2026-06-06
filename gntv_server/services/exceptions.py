@@ -24,3 +24,7 @@ class InvalidStateTransitionError(ServiceError):
 
 class PairingValidationError(ServiceError):
     """Pairing credentials are invalid, expired, or already consumed."""
+
+
+class ServiceConfigurationError(ServiceError):
+    """Required service configuration is missing or invalid."""

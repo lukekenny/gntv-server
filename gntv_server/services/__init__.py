@@ -1,5 +1,6 @@
 """Business service layer."""
 
+from gntv_server.services.admin import PropertyService, UniFiControllerService
 from gntv_server.services.audit import AuditService
 from gntv_server.services.guest_sessions import GuestSessionService
 from gntv_server.services.network_overrides import NetworkOverrideService
@@ -12,6 +13,8 @@ __all__ = [
     "GuestSessionService",
     "NetworkOverrideService",
     "PairingService",
+    "PropertyService",
     "RoomService",
     "TVDeviceService",
+    "UniFiControllerService",
 ]

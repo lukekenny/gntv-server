@@ -69,6 +69,17 @@ Open the health check endpoint:
 http://localhost:8000/healthz
 ```
 
+Admin JSON endpoints are available under `/api/admin` and require the token
+configured by `ADMIN_TOKEN`:
+
+```bash
+curl -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+  http://localhost:8000/api/admin/properties
+```
+
+UniFi controller records store an environment-variable reference such as
+`UNIFI_API_KEY`, not the API key itself.
+
 ## Initial architectural assumptions
 
 - Python backend, likely FastAPI.
